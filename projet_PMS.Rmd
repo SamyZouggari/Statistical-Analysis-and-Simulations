@@ -1,0 +1,508 @@
+---
+title: "Projet_PMS_Zouggari_Zivkovic"
+output:
+  pdf_document: default
+  html_document: default
+date: "2024-03-23"
+editor_options:
+  markdown:
+    wrap: 72
+---
+
+$\underline{\textbf{I - Analyse statistique d'un échantillon de loi de Poisson}}$
+
+1.  
+
+<!-- -->
+
+a)  Soit X une variable aléatoire suivant une loi de Poisson.
+    $\forall x \in \mathbb{N}, P(X=x) = e^{-\lambda}\frac{\lambda^x}{x!}$
+    Donc, $ln[x!P(X=x)]=e^{-\lambda}\lambda^x=xln(\lambda)-\lambda$.
+
+b)  D'après la question précedente, il existe une relation affine entre
+    $ln(x!P(X=x))$ et $\lambda$. Pour estimer graphiquement $\lambda$,
+    on peut réaliser un graphe de probabilités avec, x en abscisses et
+    ln(x!P(X=x)) en ordonnées. Et voir si la courbe correspondante
+    correspond à une droite. Si oui, alors la loi de Poisson est un
+    modèle approprié.
+
+```{r}
+lambda <- 3
+
+n<-100
+
+realisations <- rpois(n,lambda)
+
+frequences  <- table(realisations)
+abscisses_uniques <- unique(realisations)
+
+ln_x_fact_poisson_prob <- sapply(abscisses_uniques, function(x) {
+    return(log(factorial(x)*dpois(x,lambda)))
+})
+
+ordonnees_uniques <- unique(ln_x_fact_poisson_prob)
+plot(abscisses_uniques,ordonnees_uniques, xlim = range(abscisses_uniques), ylim = range(ordonnees_uniques), 
+     xlab = "Valeurs de x", ylab = "ln(x! * P(X = x))", main = "Graphique de dispersion de ln(x! * P(X = x))")
+
+
+```
+
+Ici un graphe de probabilités pour la loi de Poisson, avec des
+réalisations suivant la loi de Poisson (normal que ça aie une allure de
+droite !)
+
+c)  
+
+```{r}
+lambda <- 5
+
+n_values<-c(10,50,100,1000000)
+
+for (n in n_values){
+realisations_poisson <- rpois(n,lambda)
+realisations_geo <- rgeom(n,1/lambda)
+
+abscisses_poisson_uniques <- unique(realisations_poisson)
+abscisses_geo_uniques <- unique(realisations_geo)
+
+ln_x_fact_poisson_prob <- sapply(abscisses_poisson_uniques, function(x) {
+    return(log(factorial(x)*dpois(x,lambda)))
+})
+ln_x_fact_geo_prob <- sapply(abscisses_geo_uniques, function(x) {
+    return(log(factorial(x)*dgeom(x,1/lambda)))
+})
+
+ordonnees_poisson_uniques <- unique(ln_x_fact_poisson_prob)
+ordonnees_geo_uniques <- unique(ln_x_fact_geo_prob)
+
+courbe <-smooth.spline(abscisses_geo_uniques,ordonnees_geo_uniques)
+
+plot(NULL, xlim = c(min(abscisses_poisson_uniques,abscisses_geo_uniques),max(abscisses_poisson_uniques,abscisses_geo_uniques)), ylim = c(min(abscisses_poisson_uniques,abscisses_geo_uniques),max(ordonnees_geo_uniques,ordonnees_poisson_uniques)), 
+     xlab = "Valeurs de x", ylab = "ln(x! * P(X = x))", main = ("Graphe de probabilités pour une loi de Poisson"))
+
+lines(courbe, col='blue')
+lines(abscisses_poisson_uniques, ordonnees_poisson_uniques,col='red')
+legend("topright", legend = c("Loi de Poisson", "Loi géométrique décalée de 1"), col = c("red", "blue"), lwd = 2)
+}
+```
+
+Le graphe de probabilités pour la loi de Poisson, avec des réalisations
+suivant une loi géométrique décalée de 1, ne correspond pas à une
+droite. Contrairement aux réalisations suivant une loi de Poisson
+(logique !). Ainsi, on aboutit au résultat attendu qui est que
+l'échantillon suivant une loi géométrique ne suit pas une loi de
+poisson. A noter qu'il est plus simple de conclure quand le nombre de
+réalisations est grand.
+
+2.  
+
+<!-- -->
+
+a)  Commençons par calculer la fonction de vraisemblance pour des
+    réalisations $x_1,...,x_n$ de variables aléatoires $X_1,...,X_n$
+    suivant une loi de Poisson.
+    $L(\lambda;x_1,...,x_n)=\prod_{i=1}^{n}P(X_i=x_i)=\prod_{i=1}^{n}e^{-\lambda}\frac{\lambda^{x_i}}{x_{i}!}$
+
+$L(\lambda;x_1,...,x_n)=\frac{e^{-\lambda n}\lambda^{x_i}}{x_1!...x_n!}$
+Donc,
+$ln(L(\lambda;x_1,...,x_n))=-n\lambda+ln(\lambda)(\sum_{i=1}^{n}x_i)-\sum_{i=1}^n ln(xi!)$
+Donc,
+$\frac{\partial}{\partial \lambda}ln(L(\lambda;x_1,...,x_n))=-n+\frac{\sum_{i=1}^{n}x_i}{\lambda}$,
+Et
+$\frac{\partial^2}{\partial^2 \lambda}ln(L(\lambda;x_1,...,x_n))=-\frac{\sum_{i=1}^{n}x_i}{\lambda^2}$
+$I_n(\lambda)=-E(\frac{\partial^2}{\partial^2 \lambda}ln(L(\lambda;x_1,...,x_n)))=\frac{E(\sum_{i=1}^{n}X_i)}{\lambda^2}=\frac{\sum_{i=1}^{n}E(X_i)}{\lambda^2}$
+$I_n(\lambda)=\frac{\sum_{i=1}^{n}\lambda}{\lambda^2}=\frac{n\lambda}{\lambda^2}=\frac{n}{\lambda}$
+
+<!-- -->
+
+b)Tous les $X_i$ sont indépendantes et sont de même loi de Poisson de
+paramètre $\lambda$ Calculons le biais de $\hat{\lambda}_n$
+biais($\hat{\lambda}_n$)= $E(T_n)-\lambda$ Avec
+$E(T_n)=E(\overline{X}_n)=E(\frac{\sum_{i=1}^{n}X_i}{n})=\frac{\sum_{i=1}^{n}E(X_i)}{n}=\lambda$
+
+Donc, biais($\hat{\lambda}_n$)= $E(T_n)-\lambda=0$
+
+Donc $\hat{\lambda}_n$ est un estimateur sans biais de $\lambda$.
+
+$I_n(\lambda)=\frac{1}{Var(X)}$ Or, on sait que la borne
+inférieure de la variance (borne de Cramer-Rao) pour un estimateur sans
+biais est : $\frac{1}{Var(X)}$. Donc, cet estimateur $\hat{\lambda}_n$
+est bien de variance minimale pour $\lambda$.
+
+Donc, $\hat{\lambda}_n$ est l'estimateur sans biais de variance minimale
+de $\lambda$.
+
+c)  On cherche un intervalle de confiance bilatéral de la forme
+    $[\overline{X}_n- \epsilon,\overline{X}_n+ \epsilon ]$ On cherche
+    $P(|\hat{\lambda}_n-\lambda|>\epsilon)=\alpha$ Donc, on cherche
+    $P(|\overline{X}_n-\lambda|>\epsilon)=\alpha$
+
+On applique le théorème central-limite. On a
+$\sqrt n \frac{\overline{X}_n - E(X)}{\sigma(X)}$ converge en loi vers
+une loi normale de paramètres $N(0,1)$.
+
+Avec $E(X)=\lambda$ Comme $V(X)=E(X)$ (X suit une loi de Poisson), on
+peut estimer $\sigma(X)$ par $\sqrt{(\overline{X}_n)}$.
+
+Donc, $\sqrt n \frac{\overline{X}_n - \lambda}{\sqrt{(\overline{X}_n)}}$
+converge en loi vers une loi normale de paramètres $N(0,1)$. Donc,
+$P(|\sqrt n \frac{\overline{X}_n - \lambda}{\sqrt{(\overline{X}_n)}}|<u_{\alpha})=P(|\overline{X}_n-\lambda|<\frac{u_{\alpha} \sqrt{\overline{X}_n}}{\sqrt{n}})=P(|\overline{X}_n-\lambda|<\epsilon)$
+avec $\epsilon=\frac{u_{\alpha} \sqrt{\overline{X}_n}}{\sqrt{n}}$
+
+Donc, l'intervalle de confiance bilatéral asymptotique de seuil $\alpha$
+pour $\lambda$ s'écrit :
+$[\overline{X}_n- \frac{u_{\alpha} \sqrt{\overline{X}_n}}{\sqrt{n}},\overline{X}_n+ \frac{u_{\alpha} \sqrt{\overline{X}_n}}{\sqrt{n}} ]$.
+
+$\underline{\textbf{II - Statistiques sur le football}}$
+
+```{r}
+library(worldfootballR)
+n <-382
+Saison22 <- fb_match_results(country = c("FRA"), gender = "M", season_end_year = 2022)
+saison22_goals <- Saison22$HomeGoals + Saison22$AwayGoals
+sum(saison22_goals)
+summary(saison22_goals)
+hist(saison22_goals)
+poisson <- rpois(n, mean(saison22_goals))
+tab <- table(poisson)
+num_buts <- names(tab)
+occ <-as.numeric(tab)
+lines(num_buts, occ)
+```
+
+On peut admettre que la loi de Poisson est un modèle plausible pour ces
+donnéees car l'histogramme représentant ces données a une forme
+ressemblante à celle d'une courbe représentative de données suivant une
+loi de Poisson.
+
+c)  $\lambda$=2.804 car on suppose que les données suivent une loi de
+    Poisson x, et que l'estimateur de $\lambda$ est sa moyenne
+    expérimentale.
+d)  
+
+```{r}
+library(worldfootballR)
+n <-382
+par(mfrow = c(1,2))
+Saison22 <- fb_match_results(country = c("FRA"), gender = "M", season_end_year = 2022)
+saison22_goals <- Saison22$HomeGoals + Saison22$AwayGoals
+sum(saison22_goals)
+summary(saison22_goals)
+cat("variance : ",sd(saison22_goals))
+hist(saison22_goals)
+poisson <- rpois(n, mean(saison22_goals))
+tab <- table(poisson)
+num_buts <- names(tab)
+occ <-as.numeric(tab)
+hist(poisson)
+```
+
+Les fréquences relatives observées ressemblent aux fréquences relatives
+prédites à l'aide de la loi de Poisson. On en conclut que la loi de
+Poisson est un modèle adapté à la modélisation du nombres de buts
+marqués
+
+e)  
+
+```{r}
+somme = sum(saison22_goals)
+
+q <- qnorm(0.975)
+n<- 382
+cat("Intervalle de confiance à  5%, [",  mean(saison22_goals) - (sqrt(mean(saison22_goals))*q/sqrt(n)),",", mean(saison22_goals) + (sqrt(mean(saison22_goals))*q/sqrt(n)),"] \n")
+cat("Intervalle de confiance à  5%, [",n*( mean(saison22_goals) - (sqrt(mean(saison22_goals))*q/sqrt(n))),",", n*(mean(saison22_goals) + (sqrt(mean(saison22_goals))*q/sqrt(n))),"] \n")
+```
+
+2 -
+
+```{r}
+n <-380
+Saison23 <- fb_match_results(country = c("FRA"), gender = "M", season_end_year = 2023)
+saison23_goals <- Saison23$HomeGoals + Saison23$AwayGoals
+sum(saison23_goals)
+summary(saison23_goals)
+hist(saison23_goals)
+poisson <- rpois(n, mean(saison23_goals))
+tab <- table(poisson)
+num_buts <- names(tab)
+occ <-as.numeric(tab)
+lines(num_buts, occ)
+par(mfrow = c(1,2))
+hist(saison23_goals)
+poisson <- rpois(n, mean(saison23_goals))
+tab <- table(poisson)
+num_buts <- names(tab)
+occ <-as.numeric(tab)
+hist(poisson)
+somme = sum(saison23_goals)
+cat("Intervalle de confiance Ã  5%, [",  mean(saison23_goals) - (sqrt(mean(saison23_goals))*q/sqrt(n)),",", mean(saison23_goals) + (sqrt(mean(saison23_goals))*q/sqrt(n)),"] \n")
+cat("Intervalle de confiance Ã  5%, [",n*( mean(saison23_goals) - (sqrt(mean(saison23_goals))*q/sqrt(n))),",", n*(mean(saison23_goals) + (sqrt(mean(saison23_goals))*q/sqrt(n))),"] \n")
+```
+
+On retrouve quasiment la même chose pour la saison 2022-2023 donc on
+aurait pu utiliser les resultats de la saison précédente pour prévoir le
+nombre de but de la saison.
+
+3 -
+
+```{r}
+n <-380
+Saison03 <- fb_match_results(country = c("FRA"), gender = "M", season_end_year = 2003)
+saison03_goals <- Saison03$HomeGoals + Saison03$AwayGoals
+sum(saison03_goals)
+summary(saison03_goals)
+hist(saison03_goals)
+poisson <- rpois(n, mean(saison03_goals))
+tab <- table(poisson)
+num_buts <- names(tab)
+occ <-as.numeric(tab)
+lines(num_buts, occ)
+par(mfrow = c(1,2))
+hist(saison03_goals)
+poisson <- rpois(n, mean(saison03_goals))
+tab <- table(poisson)
+num_buts <- names(tab)
+occ <-as.numeric(tab)
+hist(poisson)
+somme = sum(saison03_goals)
+cat("Intervalle de confiance Ã  5%, [",  mean(saison03_goals) - (sqrt(mean(saison03_goals))*q/sqrt(n)),",", mean(saison03_goals) + (sqrt(mean(saison03_goals))*q/sqrt(n)),"] \n")
+cat("Intervalle de confiance Ã  5%, [",n*( mean(saison03_goals) - (sqrt(mean(saison03_goals))*q/sqrt(n))),",", n*(mean(saison03_goals) + (sqrt(mean(saison03_goals))*q/sqrt(n))),"] \n")
+```
+
+Non, le football il a changé. Comme le dit si bien Mbappé depuis la
+saison 2002-2003, il y a eu de nombreux changements dans le foot donc
+les rsultats de cette saison n'ont rien a voir avec les resultats des
+années 2000. On observe que le nombre de buts moyen et total sont bien
+différents pendant la saison 2002-2003 que pendant la saison 2022-2023.
+
+4)a) c'est une loi binomiale de parametre (90,p) car successions iid de
+loi de bernoulli (p). Esperance=90\*p, la moyenne expérimentale vaut
+2.804 en 2022, donc une estimation de p est 2.804/90, car la moyenne
+expérimentale est une estimation de l'espérance. Donc le nombre de
+minutes a attendre pour voir le 1er but marqué est 90/2.804. Attendre
+32 minutes pour avoir un but.
+
+4)b)
+
+```{r}
+matchFra2022<-fb_match_urls(country = "FRA", gender = "M", season_end_year = 2022, tier = "1st")
+n=0
+for (i in (1:50)){
+  vecteur <- fb_match_summary(match_url = matchFra2022[i])
+  if(length(vecteur$Event_Time[vecteur$Event_Type=="Goal"])==0){
+    n=n+1
+  }
+}
+
+y<-numeric(50-n)
+j=1
+for (i in (1:50)){
+  vecteur <- fb_match_summary(match_url = matchFra2022[i])
+  if(length(vecteur$Event_Time[vecteur$Event_Type=="Goal"])>0){
+    y[j]<-vecteur$Event_Time[vecteur$Event_Type=="Goal"][1]
+    j=j+1
+  }
+}
+y
+```
+
+```{r}
+summary(y)
+```
+
+4)c)
+
+```{r}
+graphe_probas <- sapply(y, function(x) {
+    return(log(dgeom(x,1/lambda)))
+})
+
+plot(y,graphe_probas)
+```
+
+La courbe est décroissante car $ln(P(X=x))=(x-1)ln(1-p) + ln(p)$ avec
+$1-p < 1$, donc le coefficient $ln(1-p)$ est négatif. Le graphe de
+probabilité a l'allure d'une droite. Ce qui veut dire que la loi
+géometrique est un bon modèle pour la distribution des minutes des
+premiers buts marqués dans les 50 premiers matchs de la saison
+2021-2022.
+
+4)d) Calculons la fonction de vraisemblance pour des réalisations
+$x_1,...,x_n$ de variables aléatoires $X_1,...,X_n$ suivant une loi
+géométrique.
+
+$L(p;x_1,...,x_n)=\prod_{i=1}^{n}P(X_i=x_i)=\prod_{i=1}^{n}(1-p)^{x_i-1}p=p^n(1-p)^{(\sum_{i=1}^nX_i)-n}=(\frac{p}{1-p})^n(1-p)^{\sum_{i=1}^nX_i}$
+Donc,
+$ln(L(p;x_1,...,x_n))=n*ln(\frac{p}{1-p})+(1-p)\sum_{i=1}^nX_i$
+Et,
+$\frac{\partial}{\partial p}ln(L(\lambda;x_1,...,x_n))=\frac{n*(1-p)-p((\sum_{i=1}^nX_i)-n)}{p(1-p)}=\frac{n-p(\sum_{i=1}^nX_i))}{p(1-p)}$.
+Cette dérivée s'annule pour $p=\frac{n}{\sum_{i=1}^nX_i}$. Ainsi,
+l'estimation du maximum de vraisemblance de p sous l'hypothèse de loi
+géométrique est : $p=\frac{n}{\sum_{i=1}^nX_i}$.
+
+```{r}
+n<- length(saison22_goals)
+somme<-sum(saison22_goals)
+cat("L'estimation numérique du maximum de vraisemblance de p sous l'hypothèse de loi géométrique est : ",n/somme,"\n")
+cat ("L'estimation du nombres de minutes à attendre pour voir le premier but marqué est : ", 90*n/somme, "min")
+
+```
+
+L'estimation du nombres de minutes à attendre pour voir le premier but
+marqué correspond très bien à celle prévue à la question 4)d) (32
+minutes) ! En fait, ici, l'estimation de p est la même que ce soit pour
+une loi géométrique ou pour une loi de Bernoulli.
+
+4)e) Pour comparer les deux lois de probabilités, on peut comparer leurs
+intervalles de confiances à un seuil $\alpha=0.05$ par exemple. Par
+exemple, comparons les intervalles de confiances à un seuil
+$\alpha=0.05$ du nombre de buts total dans une saison.
+
+```{r}
+p <- n/somme
+
+cat("Intervalle de confiance Ã  5%, [",  (mean(saison22_goals) - (sqrt(mean(saison22_goals))*q/sqrt(n))),",", (mean(saison22_goals) + (sqrt(mean(saison23_goals))*q/sqrt(n))),"] \n")
+
+cat("Intervalle de confiance Ã  5%, [", 1/(p+qnorm(0.975)*sqrt(p*(1-p)/n)),",",1/(p-qnorm(0.975)*sqrt(p*(1-p)/n)),"] \n")
+
+```
+
+On observe que l'intervalle de confiance en supposant que la loi de
+Poisson est un modèle adapté pour les réalisations, est plus resserré
+que celui en supposant que la loi géométrique est un modèle adapté pour
+les réalisations. On peut en conclure qu'on peut être plus précis en
+considérant que les données suivent une loi de Poisson.
+
+$\underline{\textbf{III - Vérifications expérimentales à base de simulations}}$
+
+1-
+
+```{r}
+
+proportions<- function(m,n,lambda,alpha){
+x <- rpois(n*m,lambda)
+
+X <-matrix(x,nrow=n,ncol=m)
+q <- qnorm(1-(alpha/2))
+
+b_inf <- apply(X,2,FUN = function(x) mean(x) - (sqrt(mean(x))*q/sqrt(n)))
+b_sup <- apply(X, 2, FUN = function(x) mean(x) + (sqrt(mean(x))*q/sqrt(n)))
+
+
+test_inf <- (lambda > b_inf)
+test_sup <- (lambda < b_sup)
+cat("Proportion de",m,"échantillons de taille",n," contenant lambda = ", lambda,"pour un seuil ",alpha," :",mean(test_inf & test_sup),"\n")
+}
+
+cat("On fait varier alpha : \n")
+proportions(1000,1000,2,0.01)
+proportions(1000,1000,2,0.05)
+proportions(1000,1000,2,0.10)
+proportions(1000,1000,2,0.20)
+cat("On fait varier lambda : \n")
+proportions(1000,1000,1,0.05)
+proportions(1000,1000,10,0.05)
+proportions(1000,1000,100,0.05)
+proportions(1000,1000,1000,0.05)
+cat("on fait varier n : \n")
+proportions(1000,5,2,0.05)
+proportions(1000,10,2,0.05)
+proportions(1000,50,2,0.05)
+proportions(1000,10000,2,0.05)
+cat("On fait varier m : \n")
+proportions(10,1000,2,0.05)
+proportions(100,1000,2,0.05)
+proportions(1000,1000,2,0.05)
+proportions(10000,1000,2,0.05)
+```
+
+D'après les observations, on peut conclure qu'en simulant un grand
+nombre d'échantillons de taille n de loi de Poisson de paramèrtre
+$\lambda$, on a un bien une proportion d'approximativement $1-\alpha$
+des intervalles de confiances du seuil $\alpha$ qui contient la vraie
+valeur $\lambda$.
+
+En faisant varier $\alpha$, on fait varier la proportion, qui vaut
+toujours approximativement $1-\alpha$. En faisant varier $\lambda$, la
+proportion ne change pas en moyenne. Quand n et/ou m tendent vers
+l'infini, la proportion converge vers $1-\alpha$.
+
+2-
+
+```{r}
+
+proba <- function(n,m,lambda,alpha,epsilon){
+x <- rpois(n*m,lambda)
+
+X <-matrix(x,nrow=n,ncol=m)
+
+q <- qnorm(1-(alpha/2))
+
+Tn <- apply(X,2,FUN = function(x) mean(x))
+
+test_inf <- (abs(Tn-lambda)>epsilon)
+mean(test_inf)
+}
+x<-seq(1,1000,5)
+y <- numeric(length(x))
+for (i in seq_along(x)) {
+  y[i] <- proba(x[i], 1000, 2, 0.05, 0.05)
+}
+plot(x,y,type = "l", col = "blue", lwd = 2, xlab = "n", ylab = "P(|Tn-lambda|>eps)", main = "Courbe de P(|Tn-lambda|>eps), eps=0.05")
+
+```
+
+Cette courbe de l'évolution de $P(|T_n-\lambda|>\epsilon)$ en fonction
+de n montre bien que l'estimateur converge en probabilité.
+
+3-
+
+```{r}
+histo <- function(n,m,lambda){
+x <- rpois(n*m,lambda)
+X <-matrix(x,nrow=n,ncol=m)
+
+moyenne_des_echantillons <- rowMeans(X)
+loi_normale <- pnorm(n,mean=mean(moyenne_des_echantillons),sd=sd(moyenne_des_echantillons))
+hist(moyenne_des_echantillons, prob = TRUE, xlab = "Densité", ylab = "moyenne des échantillons", main="Histogramme de la moyenne des échantillons")
+curve(dnorm(x,mean(moyenne_des_echantillons),sd(moyenne_des_echantillons)), add = TRUE, col = "blue", lwd = 2)
+}
+
+graphe <- function(n,m,lambda){
+  
+}
+histo(5,50,10)
+histo(10,50,10)
+histo(100,50,10)
+histo(500,50,10)
+histo(1000,50,10)
+histo(10000,50,10)
+```
+
+On peut voir à travers les histogrammes que la loi de l'estimateur tend
+asymptotiquement vers une loi normale lorsque n augmente (la densité
+d'une loi normale de paramètres bien choisis épouse bien la forme de
+l'histogramme).
+
+```{r}
+graphe_de_probas<- function(n,m,lambda){
+x <- rpois(n*m,lambda)
+X <-matrix(x,nrow=n,ncol=m)
+
+moyenne_des_echantillons <- rowMeans(X)
+xx<-sort(moyenne_des_echantillons)[1:n]
+y<-qnorm(seq(1:n-1)/n)
+plot(sort(moyenne_des_echantillons)[1:n],qnorm(seq(1:n-1)/n))
+}
+graphe_de_probas(5,50,10)
+graphe_de_probas(10,50,10)
+graphe_de_probas(100,50,10)
+graphe_de_probas(500,50,10)
+graphe_de_probas(1000,50,10)
+graphe_de_probas(10000,50,10)
+```
+
+On arrive à la même conclusion en observant les graphes de probabilités.
+La courbe du graphe de probabilités ressemble de plus en plus à une
+droite ce qui montre que la distibution de l'estimateur tend
+asymptotiquement vers une loi normale.
