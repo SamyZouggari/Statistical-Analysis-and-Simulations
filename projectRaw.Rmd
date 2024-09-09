@@ -1,14 +1,3 @@
----
-title: "Projet_PMS_Zouggari_Zivkovic"
-output:
-  pdf_document: default
-  html_document: default
-date: "2024-03-23"
-editor_options:
-  markdown:
-    wrap: 72
----
-
 $\underline{\textbf{I - Analyse statistique d'un échantillon de loi de Poisson}}$
 
 1.  
