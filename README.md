@@ -1,4 +1,4 @@
-# Analyses statistiques et simulation en R // Statistical analysis and simulations in R
+## Analyses statistiques et simulation en R // Statistical analysis and simulations in R
 
 🇫🇷 : 
 Ce projet de statistiques se divise en trois parties distinctes. La première partie se concentre sur l'analyse statistique d'un échantillon de loi de Poisson, où j'ai appliqué des méthodes de modélisation et d'interprétation des données. La deuxième partie explore des statistiques relatives au football, impliquant des analyses descriptives et des inférences sur des données de matchs pour dégager des tendances et des performances clés. Enfin, la troisième partie consiste en des vérifications expérimentales basées sur des simulations, permettant de tester des hypothèses et de valider des modèles théoriques à l'aide de simulations en R. L'ensemble du projet est documenté en Markdown et de nombreuses parties ont été écrites en LaTex, les scripts de ce projet ont été écrits en R. Ce projet m'a permit de me familiariser avec le langage de programmation R et de m'initier à la manipulation de données.
